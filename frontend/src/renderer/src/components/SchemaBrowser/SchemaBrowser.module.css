@@ -1,0 +1,46 @@
+.panel { display: flex; flex-direction: column; height: 100%; }
+
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.refreshBtn { color: var(--accent); font-size: 14px; }
+.refreshBtn:hover { color: var(--text); }
+
+.loadBtn {
+  margin: 12px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--bg-hover);
+  font-size: 12px;
+  color: var(--accent);
+  text-align: center;
+}
+.loadBtn:hover { background: var(--bg-active); }
+
+.hint { padding: 16px 12px; font-size: 12px; color: var(--text-muted); text-align: center; }
+
+.filterWrap { padding: 6px 8px; }
+.filter { width: 100%; font-size: 12px; padding: 4px 8px; }
+
+.tree { flex: 1; overflow-y: auto; padding-bottom: 8px; }
+
+.node {
+  display: flex; align-items: center; gap: 4px;
+  height: 24px; cursor: pointer;
+  font-size: 12px;
+  border-radius: 4px;
+  margin: 1px 4px;
+  user-select: none;
+}
+.node:hover { background: var(--bg-hover); }
+.nodeObject:hover { color: var(--accent); }
+
+.arrow { width: 14px; text-align: center; color: var(--text-muted); font-size: 10px; flex-shrink: 0; }
+.arrowPlaceholder { width: 14px; flex-shrink: 0; }
+
+.label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

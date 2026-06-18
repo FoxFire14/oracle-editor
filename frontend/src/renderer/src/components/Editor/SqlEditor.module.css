@@ -1,0 +1,76 @@
+.editorWrap {
+  display: flex;
+  height: 100%;
+  background: var(--bg-panel);
+  overflow: hidden;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Menlo', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.lineNumbers {
+  flex-shrink: 0;
+  width: 48px;
+  padding: 8px 0;
+  text-align: right;
+  color: var(--text-muted);
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+  user-select: none;
+}
+
+.lineNum {
+  padding: 0 8px;
+  min-height: 1.6em;
+}
+
+.editorInner {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+.highlight,
+.textarea {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 8px 12px;
+  border: none;
+  outline: none;
+  resize: none;
+  white-space: pre;
+  overflow: auto;
+  font: inherit;
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+.highlight {
+  background: transparent;
+  color: var(--text);
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.textarea {
+  background: transparent;
+  color: transparent;
+  caret-color: var(--text);
+  z-index: 2;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Syntax token colors */
+:global(.tok-keyword)      { color: var(--syn-keyword); font-weight: 600; }
+:global(.tok-keyword2)     { color: var(--accent2); }
+:global(.tok-string)       { color: var(--syn-string); }
+:global(.tok-number)       { color: var(--syn-number); }
+:global(.tok-comment)      { color: var(--syn-comment); font-style: italic; }
+:global(.tok-comment-block){ color: var(--syn-comment); font-style: italic; }
+:global(.tok-function)     { color: var(--syn-function); }
+:global(.tok-operator)     { color: var(--syn-operator); }
+:global(.tok-identifier)   { color: var(--text); }
+:global(.tok-punctuation)  { color: var(--text-muted); }

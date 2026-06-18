@@ -1,0 +1,154 @@
+.app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+/* macOS traffic light area */
+.titleBar {
+  height: 28px;
+  flex-shrink: 0;
+  -webkit-app-region: drag;
+  display: flex;
+  align-items: center;
+  padding-left: 80px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+}
+.appName { font-size: 12px; color: var(--text-muted); user-select: none; }
+
+.body { flex: 1; display: flex; overflow: hidden; }
+
+/* Icon rail */
+.rail {
+  width: 44px;
+  flex-shrink: 0;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  gap: 4px;
+}
+.railBtn {
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+}
+.railBtn:hover { background: var(--bg-hover); color: var(--text); }
+.railActive { background: var(--bg-active) !important; color: var(--accent) !important; }
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Main area */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Tab bar */
+.tabBar {
+  display: flex;
+  align-items: center;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  height: 34px;
+  overflow: hidden;
+}
+
+.tabList {
+  display: flex;
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.tabList::-webkit-scrollbar { height: 0; }
+
+.tabItem {
+  display: flex; align-items: center; gap: 6px;
+  padding: 0 10px;
+  height: 34px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+  border-right: 1px solid var(--border);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.tabItem:hover { background: var(--bg-hover); color: var(--text); }
+.tabActive { background: var(--bg-base); color: var(--text); border-bottom: 2px solid var(--accent); }
+
+.tabIcon { font-size: 11px; }
+.tabTitle { max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+.tabClose { opacity: 0; font-size: 10px; color: var(--text-muted); width: 14px; height: 14px; border-radius: 3px; display: flex; align-items: center; justify-content: center; }
+.tabItem:hover .tabClose { opacity: 1; }
+.tabClose:hover { background: var(--bg-hover); color: var(--red); }
+
+.newTabBtn {
+  width: 34px; height: 34px;
+  font-size: 18px; line-height: 1;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.newTabBtn:hover { color: var(--accent); background: var(--bg-hover); }
+
+.debugTabBtn {
+  width: 34px; height: 34px;
+  font-size: 16px; line-height: 1;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-left: 1px solid var(--border);
+}
+.debugTabBtn:hover { background: var(--bg-hover); }
+
+/* Editor area */
+.editorArea { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+.editorPane { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+
+.editorToolbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+}
+.connSelect {
+  font-size: 12px; padding: 2px 8px;
+  max-width: 180px;
+}
+.runBtn {
+  padding: 3px 12px; border-radius: 5px;
+  background: var(--accent); color: var(--bg-base); font-weight: 600; font-size: 12px;
+}
+.runBtn:disabled { opacity: .5; }
+.shortcut { font-size: 11px; color: var(--text-muted); }
+
+.resultsPane {
+  height: 260px;
+  flex-shrink: 0;
+  border-top: 2px solid var(--border);
+  overflow: hidden;
+}
+
+/* Welcome screen */
+.welcome {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; color: var(--text-muted);
+}
+.welcomeIcon { font-size: 48px; }
+.welcome h2 { font-size: 22px; color: var(--text); }
+.welcome p { font-size: 13px; }
+.welcomeBtn {
+  margin-top: 8px;
+  padding: 8px 20px; border-radius: 8px;
+  background: var(--accent); color: var(--bg-base); font-weight: 600;
+}
