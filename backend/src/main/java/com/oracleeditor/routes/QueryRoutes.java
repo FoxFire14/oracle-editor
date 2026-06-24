@@ -2,8 +2,10 @@ package com.oracleeditor.routes;
 
 import com.oracleeditor.db.ConnectionManager;
 import com.oracleeditor.db.QueryExecutor;
+import com.oracleeditor.dialect.DatabaseDialect;
 import com.oracleeditor.model.QueryResult;
 import io.javalin.Javalin;
+
 import java.sql.Connection;
 
 public class QueryRoutes {
@@ -23,9 +25,10 @@ public class QueryRoutes {
                 return;
             }
 
+            DatabaseDialect dialect = ConnectionManager.getInstance().getDialect(connectionId);
             try (Connection conn = ConnectionManager.getInstance().getConnection(connectionId)) {
                 conn.setAutoCommit(false);
-                QueryResult result = QueryExecutor.execute(conn, sql, maxRows);
+                QueryResult result = QueryExecutor.execute(conn, sql, maxRows, dialect);
                 ctx.json(result);
             } catch (Exception e) {
                 ctx.json(QueryResult.error(e.getMessage()));
@@ -35,14 +38,9 @@ public class QueryRoutes {
         app.post("/api/query/explain", ctx -> {
             ExplainRequest body = ctx.bodyAsClass(ExplainRequest.class);
             String connectionId = body.connectionId();
-            String sql = body.sql();
-
+            DatabaseDialect dialect = ConnectionManager.getInstance().getDialect(connectionId);
             try (Connection conn = ConnectionManager.getInstance().getConnection(connectionId)) {
-                String planSql = "EXPLAIN PLAN FOR " + sql;
-                conn.createStatement().execute(planSql);
-                QueryResult result = QueryExecutor.execute(conn,
-                        "SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY)", 500);
-                ctx.json(result);
+                ctx.json(dialect.explainPlan(conn, body.sql()));
             } catch (Exception e) {
                 ctx.json(QueryResult.error(e.getMessage()));
             }

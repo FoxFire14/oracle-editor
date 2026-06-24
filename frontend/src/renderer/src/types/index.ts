@@ -8,6 +8,7 @@ export interface ConnectionConfig {
   password: string
   role: 'NORMAL' | 'SYSDBA' | 'SYSOPER'
   connectionType: 'BASIC' | 'TNS' | 'JDBC_URL'
+  dbType?: 'ORACLE' | 'POSTGRES'
   tnsAlias?: string
   jdbcUrl?: string
   connected?: boolean

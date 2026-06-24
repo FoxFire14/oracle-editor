@@ -1,5 +1,6 @@
-import React, { useRef, useCallback, useEffect, useState, useImperativeHandle, forwardRef } from 'react'
-import { tokenize } from './tokenizer'
+import React, { useRef, useCallback, useDeferredValue, useMemo, useImperativeHandle, forwardRef } from 'react'
+import { tokenize, type Dialect } from './tokenizer'
+import { isSlashTerminator, extractStatementAtCursor } from './sqlUtils'
 import styles from './SqlEditor.module.css'
 
 export interface SqlEditorHandle {
@@ -11,10 +12,11 @@ interface Props {
   onChange: (value: string) => void
   onExecute?: (sql: string) => void
   readOnly?: boolean
+  dialect?: Dialect
 }
 
-function highlight(code: string): string {
-  const tokens = tokenize(code)
+function highlight(code: string, dialect: Dialect): string {
+  const tokens = tokenize(code, dialect)
   return tokens
     .map((t) => {
       const esc = t.value
@@ -27,50 +29,18 @@ function highlight(code: string): string {
     .join('')
 }
 
-function isSlashTerminator(code: string, pos: number): boolean {
-  if (code[pos] !== '/') return false
-  const lineStart = code.lastIndexOf('\n', pos - 1) + 1
-  return code.slice(lineStart, pos).trim() === ''
-}
-
-function extractStatementAtCursor(code: string, cursorPos: number): string {
-  // If there's a `/` terminator ahead of the cursor, the cursor is inside a PL/SQL block.
-  // Scan forward without stopping — PL/SQL blocks contain `;` internally.
-  let nextSlash = -1
-  for (let i = cursorPos; i < code.length; i++) {
-    if (isSlashTerminator(code, i)) { nextSlash = i + 1; break }
-  }
-
-  if (nextSlash !== -1) {
-    // PL/SQL block: find start by walking back to the previous `/` or top of file
-    let start = 0
-    for (let i = cursorPos - 1; i >= 0; i--) {
-      if (isSlashTerminator(code, i)) { start = i + 1; break }
-    }
-    return code.slice(start, nextSlash).trim()
-  }
-
-  // Plain SQL: stop at `;` or blank line
-  let start = 0
-  for (let i = cursorPos - 1; i >= 0; i--) {
-    if (code[i] === ';') { start = i + 1; break }
-    if (code[i] === '\n' && i > 0 && code[i - 1] === '\n') { start = i + 1; break }
-  }
-
-  let end = code.length
-  for (let i = cursorPos; i < code.length; i++) {
-    if (code[i] === ';') { end = i + 1; break }
-    if (code[i] === '\n' && i + 1 < code.length && code[i + 1] === '\n') { end = i; break }
-  }
-
-  return code.slice(start, end).trim()
-}
 
 export const SqlEditor = forwardRef<SqlEditorHandle, Props>(
-  ({ value, onChange, onExecute, readOnly }, ref) => {
+  ({ value, onChange, onExecute, readOnly, dialect = 'oracle' }, ref) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const highlightRef = useRef<HTMLDivElement>(null)
-    const [lineCount, setLineCount] = useState(1)
+
+    // Defer highlight computation so keystrokes are never blocked
+    const deferredValue = useDeferredValue(value)
+    const highlighted = useMemo(() => highlight(deferredValue, dialect) + '\n', [deferredValue, dialect])
+
+    // Compute inline — no useEffect/setState needed
+    const lineCount = (value.match(/\n/g)?.length ?? 0) + 1
 
     useImperativeHandle(ref, () => ({
       getStatementAtCursor: () => {
@@ -89,11 +59,6 @@ export const SqlEditor = forwardRef<SqlEditorHandle, Props>(
       highlightRef.current.scrollTop = textareaRef.current.scrollTop
       highlightRef.current.scrollLeft = textareaRef.current.scrollLeft
     }, [])
-
-    useEffect(() => {
-      const lines = (value.match(/\n/g) ?? []).length + 1
-      setLineCount(lines)
-    }, [value])
 
     const handleKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -184,7 +149,7 @@ export const SqlEditor = forwardRef<SqlEditorHandle, Props>(
             ref={highlightRef}
             className={styles.highlight}
             aria-hidden
-            dangerouslySetInnerHTML={{ __html: highlight(value) + '\n' }}
+            dangerouslySetInnerHTML={{ __html: highlighted }}
           />
           <textarea
             ref={textareaRef}

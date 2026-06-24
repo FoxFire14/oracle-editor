@@ -12,7 +12,8 @@ const EMPTY: Omit<ConnectionConfig, 'id' | 'connected'> = {
   username: '',
   password: '',
   role: 'NORMAL',
-  connectionType: 'BASIC'
+  connectionType: 'BASIC',
+  dbType: 'ORACLE'
 }
 
 export function ConnectionPanel(): React.JSX.Element {
@@ -36,7 +37,8 @@ export function ConnectionPanel(): React.JSX.Element {
     setEditingId(conn.id)
     setForm({ name: conn.name, host: conn.host, port: conn.port, serviceName: conn.serviceName,
       username: conn.username, password: conn.password, role: conn.role,
-      connectionType: conn.connectionType, tnsAlias: conn.tnsAlias, jdbcUrl: conn.jdbcUrl })
+      connectionType: conn.connectionType, dbType: conn.dbType ?? 'ORACLE',
+      tnsAlias: conn.tnsAlias, jdbcUrl: conn.jdbcUrl })
     setError('')
     setShowForm(true)
   }
@@ -151,10 +153,16 @@ export function ConnectionPanel(): React.JSX.Element {
               <label>Name</label>
               <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="My Oracle DB" />
 
-              <label>Type</label>
+              <label>Database</label>
+              <select value={form.dbType ?? 'ORACLE'} onChange={(e) => setForm({ ...form, dbType: e.target.value as ConnectionConfig['dbType'], port: e.target.value === 'POSTGRES' ? 5432 : 1521 })}>
+                <option value="ORACLE">Oracle</option>
+                <option value="POSTGRES">PostgreSQL</option>
+              </select>
+
+              <label>Connection</label>
               <select value={form.connectionType} onChange={(e) => setForm({ ...form, connectionType: e.target.value as ConnectionConfig['connectionType'] })}>
                 <option value="BASIC">Basic (Host/Port/Service)</option>
-                <option value="TNS">TNS Alias</option>
+                {form.dbType !== 'POSTGRES' && <option value="TNS">TNS Alias</option>}
                 <option value="JDBC_URL">JDBC URL</option>
               </select>
 
@@ -163,8 +171,8 @@ export function ConnectionPanel(): React.JSX.Element {
                 <input value={form.host} onChange={(e) => setForm({ ...form, host: e.target.value })} placeholder="localhost" />
                 <label>Port</label>
                 <input type="number" value={form.port} onChange={(e) => setForm({ ...form, port: Number(e.target.value) })} />
-                <label>Service Name</label>
-                <input value={form.serviceName} onChange={(e) => setForm({ ...form, serviceName: e.target.value })} placeholder="ORCL" />
+                <label>{form.dbType === 'POSTGRES' ? 'Database' : 'Service Name'}</label>
+                <input value={form.serviceName} onChange={(e) => setForm({ ...form, serviceName: e.target.value })} placeholder={form.dbType === 'POSTGRES' ? 'postgres' : 'ORCL'} />
               </>}
 
               {form.connectionType === 'TNS' && <>
@@ -174,19 +182,21 @@ export function ConnectionPanel(): React.JSX.Element {
 
               {form.connectionType === 'JDBC_URL' && <>
                 <label>JDBC URL</label>
-                <input value={form.jdbcUrl ?? ''} onChange={(e) => setForm({ ...form, jdbcUrl: e.target.value })} placeholder="jdbc:oracle:thin:@..." />
+                <input value={form.jdbcUrl ?? ''} onChange={(e) => setForm({ ...form, jdbcUrl: e.target.value })} placeholder={form.dbType === 'POSTGRES' ? 'jdbc:postgresql://localhost:5432/mydb' : 'jdbc:oracle:thin:@...'} />
               </>}
 
               <label>Username</label>
               <input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
               <label>Password</label>
               <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-              <label>Role</label>
-              <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as ConnectionConfig['role'] })}>
-                <option value="NORMAL">Normal</option>
-                <option value="SYSDBA">SYSDBA</option>
-                <option value="SYSOPER">SYSOPER</option>
-              </select>
+              {form.dbType !== 'POSTGRES' && <>
+                <label>Role</label>
+                <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as ConnectionConfig['role'] })}>
+                  <option value="NORMAL">Normal</option>
+                  <option value="SYSDBA">SYSDBA</option>
+                  <option value="SYSOPER">SYSOPER</option>
+                </select>
+              </>}
             </div>
             {error && <div className={styles.err}>{error}</div>}
             <div className={styles.modalFooter}>

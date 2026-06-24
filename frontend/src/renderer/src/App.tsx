@@ -13,12 +13,16 @@ import styles from './App.module.css'
 type SidebarTab = 'connections' | 'schema'
 
 export default function App(): React.JSX.Element {
-  const { tabs, activeTabId, activeConnectionId, addTab, updateTab, removeTab, setActiveTab, setQueryResult, queryResults } = useStore()
+  const { tabs, activeTabId, activeConnectionId, connections, addTab, updateTab, removeTab, setActiveTab, setQueryResult, queryResults } = useStore()
   const [sidebar, setSidebar] = useState<SidebarTab>('connections')
   const [loadingQuery, setLoadingQuery] = useState(false)
   const editorRef = useRef<SqlEditorHandle>(null)
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? null
+
+  const activeConnId = activeTab?.connectionId ?? activeConnectionId
+  const activeConn = connections.find((c) => c.id === activeConnId) ?? null
+  const dialect = activeConn?.dbType === 'POSTGRES' ? 'postgres' : 'oracle'
 
   // Re-register all saved connections with the Java backend on startup
   useEffect(() => {
@@ -136,6 +140,7 @@ export default function App(): React.JSX.Element {
                       value={activeTab.content}
                       onChange={(v) => updateTab(activeTab.id, { content: v, isDirty: true })}
                       onExecute={handleExecute}
+                      dialect={dialect}
                     />
                   </div>
                   <div className={styles.resultsPane}>

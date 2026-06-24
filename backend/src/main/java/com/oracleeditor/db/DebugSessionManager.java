@@ -1,5 +1,7 @@
 package com.oracleeditor.db;
 
+import com.oracleeditor.dialect.DatabaseDialect;
+import com.oracleeditor.dialect.DialectFactory;
 import com.oracleeditor.model.ConnectionConfig;
 import com.oracleeditor.model.QueryResult;
 
@@ -12,7 +14,8 @@ public class DebugSessionManager {
 
     public static DebugSessionManager getInstance() { return INSTANCE; }
 
-    public record DebugSession(String id, String connectionId, Connection conn, List<LogEntry> log) {}
+    public record DebugSession(String id, String connectionId, Connection conn,
+                               List<LogEntry> log, DatabaseDialect dialect) {}
     public record LogEntry(String sql, boolean success, String message, long ms) {}
 
     private final Map<String, DebugSession> sessions = new ConcurrentHashMap<>();
@@ -21,15 +24,13 @@ public class DebugSessionManager {
         ConnectionConfig config = ConnectionManager.getInstance().getConfig(connectionId);
         if (config == null) throw new IllegalArgumentException("Connection not found: " + connectionId);
 
-        // Dedicated connection — not from pool — so we can hold it open across requests
-        Connection conn = DriverManager.getConnection(config.toJdbcUrl(), config.username, config.password);
-        if ("SYSDBA".equalsIgnoreCase(config.role)) {
-            conn.createStatement().execute("SET ROLE SYSDBA");
-        }
+        DatabaseDialect dialect = DialectFactory.create(config.dbType);
+        Connection conn = DriverManager.getConnection(
+                dialect.buildJdbcUrl(config), config.username, config.password);
         conn.setAutoCommit(false);
 
         String sessionId = UUID.randomUUID().toString();
-        DebugSession session = new DebugSession(sessionId, connectionId, conn, new ArrayList<>());
+        DebugSession session = new DebugSession(sessionId, connectionId, conn, new ArrayList<>(), dialect);
         sessions.put(sessionId, session);
         return session;
     }
@@ -38,36 +39,19 @@ public class DebugSessionManager {
         DebugSession session = get(sessionId);
         long start = System.currentTimeMillis();
 
-        // Enable DBMS_OUTPUT before every execution
-        try (Statement en = session.conn().createStatement()) {
-            en.execute("BEGIN DBMS_OUTPUT.ENABLE(1000000); END;");
-        }
+        session.dialect().enableOutput(session.conn());
 
         try {
-            QueryResult result = QueryExecutor.execute(session.conn(), sql, 1000);
-            result.dbmsOutput = captureDbmsOutput(session.conn());
-            session.log().add(new LogEntry(sql, result.success, result.error, System.currentTimeMillis() - start));
+            QueryResult result = QueryExecutor.execute(session.conn(), sql, 1000, session.dialect());
+            result.dbmsOutput = session.dialect().captureOutput(session.conn());
+            session.log().add(new LogEntry(sql, result.success, result.error,
+                    System.currentTimeMillis() - start));
             return result;
         } catch (SQLException e) {
-            session.log().add(new LogEntry(sql, false, e.getMessage(), System.currentTimeMillis() - start));
+            session.log().add(new LogEntry(sql, false, e.getMessage(),
+                    System.currentTimeMillis() - start));
             throw e;
         }
-    }
-
-    private String captureDbmsOutput(Connection conn) {
-        StringBuilder sb = new StringBuilder();
-        try (CallableStatement line = conn.prepareCall(
-                "BEGIN DBMS_OUTPUT.GET_LINE(:l, :s); END;")) {
-            for (int i = 0; i < 10000; i++) {
-                line.registerOutParameter(1, java.sql.Types.VARCHAR);
-                line.registerOutParameter(2, java.sql.Types.INTEGER);
-                line.execute();
-                if (line.getInt(2) != 0) break; // no more lines
-                String l = line.getString(1);
-                if (l != null) sb.append(l).append('\n');
-            }
-        } catch (Exception ignored) {}
-        return sb.isEmpty() ? null : sb.toString().stripTrailing();
     }
 
     public void commit(String sessionId) throws SQLException {
@@ -86,7 +70,7 @@ public class DebugSessionManager {
         DebugSession session = sessions.remove(sessionId);
         if (session == null) return;
         try { session.conn().rollback(); } catch (Exception ignored) {}
-        try { session.conn().close(); } catch (Exception ignored) {}
+        try { session.conn().close();   } catch (Exception ignored) {}
     }
 
     public Map<String, Object> status(String sessionId) throws SQLException {
@@ -94,6 +78,7 @@ public class DebugSessionManager {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("sessionId", sessionId);
         m.put("connectionId", session.connectionId());
+        m.put("dialect", session.dialect().displayName());
         m.put("autoCommit", session.conn().getAutoCommit());
         m.put("log", session.log());
         return m;
@@ -105,10 +90,16 @@ public class DebugSessionManager {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("sessionId", s.id());
             m.put("connectionId", s.connectionId());
+            m.put("dialect", s.dialect().displayName());
             m.put("logCount", s.log().size());
             result.add(m);
         }
         return result;
+    }
+
+    // Package-private: lets tests inject a pre-built session with a mock connection
+    void injectSession(DebugSession session) {
+        sessions.put(session.id(), session);
     }
 
     private DebugSession get(String sessionId) {

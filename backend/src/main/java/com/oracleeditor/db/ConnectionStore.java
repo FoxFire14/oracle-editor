@@ -17,6 +17,11 @@ public class ConnectionStore {
         this.file = new File(dir + File.separator + "connections.json");
     }
 
+    // Package-private: allows tests to point the store at a temp directory
+    ConnectionStore(File file) {
+        this.file = file;
+    }
+
     public List<ConnectionConfig> load() {
         if (!file.exists()) return new ArrayList<>();
         try {

@@ -11,11 +11,13 @@ public class ConnectionConfig {
     public String serviceName;
     public String username;
     public String password;
-    public String role; // NORMAL, SYSDBA, SYSOPER
+    public String role;           // NORMAL, SYSDBA, SYSOPER
     public String connectionType; // BASIC, TNS, JDBC_URL
+    public String dbType;         // ORACLE (default), POSTGRES
     public String tnsAlias;
     public String jdbcUrl;
 
+    /** Kept for backward compatibility with OracleDialect and existing tests. */
     public String toJdbcUrl() {
         if (jdbcUrl != null && !jdbcUrl.isBlank()) return jdbcUrl;
         if (tnsAlias != null && !tnsAlias.isBlank()) {
