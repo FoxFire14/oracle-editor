@@ -11,6 +11,7 @@ frontend/dist/
 frontend/dist-electron/
 frontend/out/
 frontend/.vite/
+frontend/release/
 
 # OS
 .DS_Store
